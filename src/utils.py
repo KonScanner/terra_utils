@@ -86,6 +86,11 @@ class Utils:
         gas = Coins({k: v for k, v in r.json().items() if k == denom})
         return gas
 
+    def convert_coin(self, coin: Coin, decimals: int = 6) -> dict:
+        res = json.loads(coin.to_json())
+        res["amount"] = float(int(res["amount"]) / 10**decimals)
+        return res
+
     def convert_denom(
         self, amount: float, denom: str = "uusd", decimals: int = 6
     ) -> str:
@@ -114,7 +119,8 @@ class Utils:
         returns:
             Coin
         """
-        result = self.client.market.get_price(coin1, denom)
+        result = self.client.market.swap_rate(coin, denom)
+        return result
 
     def get_luna_price(self, denom: str = "uusd", interval="5m") -> dict:
         """
@@ -129,3 +135,36 @@ class Utils:
         url = f"https://fcd.terra.dev/v1/market/price?denom={denom}&interval={interval}"
         req = requests.request(method="GET", url=url)
         return req.json()
+
+    def swap(
+        self,
+        coin: str,
+        denom: str,
+        memo: str = "",
+        gas_denom: str = "uusd",
+        gas_adj: float = 1.3,
+    ) -> dict:
+        message = MsgSwap(self.mnemonic_key.acc_address, coin, denom)
+        wallet = self.get_wallet(mnemonic=self.mnemonic_key)
+        gas = self.get_gas(denom=gas_denom)
+        tx = wallet.create_and_sign_tx(
+            msgs=[message],
+            memo=memo,
+            gas_prices=gas,
+            gas_adjustment=gas_adj,
+            fee_denoms=[gas_denom],
+        )
+        coin_convert = self.convert_coin(coin=Coin.from_str(coin))
+        gas_convert = gas.to_data()[0]
+        market_rate = self.get_market_rate(coin, denom)
+        market_rate = self.convert_coin(market_rate)
+        print(
+            f"Swap {float(coin_convert['amount']) + float(gas_convert['amount']):.2f} {coin_convert['denom']} for {denom} at {market_rate['amount']} {market_rate['denom']}"
+        )
+        # Temporary (testing)
+        s = input("Do you want to proceed with the transaction? (y/n): ")
+        if s.lower() == "y":
+            result = self.client.tx.broadcast(tx)
+            return result
+        else:
+            return None
