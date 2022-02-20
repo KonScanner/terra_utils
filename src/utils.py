@@ -40,7 +40,7 @@ class Utils:
         self.mnemonic = MnemonicKey()
         return self.mnemonic
 
-    def get_mnemonic(self, mnemonic: str) -> MnemonicKey:
+    def get_mnemonic(self, mnemonic: str = None) -> MnemonicKey:
         """
         Get mnemonic key from a given mnemonic
         args:
@@ -158,6 +158,7 @@ class Utils:
         gas_convert = gas.to_data()[0]
         market_rate = self.get_market_rate(coin, denom)
         market_rate = self.convert_coin(market_rate)
+        # Needs fix to account for denom
         print(
             f"Swap {float(coin_convert['amount']) + float(gas_convert['amount']):.2f} {coin_convert['denom']} for {denom} at {market_rate['amount']} {market_rate['denom']}"
         )
