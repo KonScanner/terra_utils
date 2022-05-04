@@ -63,11 +63,10 @@ class Utils:
         return self.client.wallet(mnemonic)
 
     def get_funds(self, url="https://faucet.terra.money/"):
-        print("Get some funds here {}".format(url))
+        print(f"Get some funds here {url}")
 
     def get_balance(self):
-        balance = self.client.bank.balance(self.mnemonic_key.acc_address)
-        return balance
+        return self.client.bank.balance(self.mnemonic_key.acc_address)
 
     def get_gas(self, denom: str = "uusd") -> Coins:
         """
@@ -80,11 +79,10 @@ class Utils:
 
         if self.chain == "bombay":
             url = "https://bombay-fcd.terra.dev/v1/txs/gas_prices"
-        if self.chain == "columbus":
+        elif self.chain == "columbus":
             url = "https://fcd.terra.dev/v1/txs/gas_prices"
         r = requests.request(method="GET", url=url)
-        gas = Coins({k: v for k, v in r.json().items() if k == denom})
-        return gas
+        return Coins({k: v for k, v in r.json().items() if k == denom})
 
     def convert_coin(self, coin: Coin, decimals: int = 6) -> dict:
         res = json.loads(coin.to_json())
@@ -105,8 +103,7 @@ class Utils:
             str -- 100000000uusd
         """
         exponent = 10**decimals
-        result = str(int(amount * exponent)) + denom
-        return result
+        return str(int(amount * exponent)) + denom
 
     def get_market_rate(
         self, coin: str = "100000000uusd", denom: str = "uluna"
@@ -119,8 +116,7 @@ class Utils:
         returns:
             Coin
         """
-        result = self.client.market.swap_rate(coin, denom)
-        return result
+        return self.client.market.swap_rate(coin, denom)
 
     def get_luna_price(self, denom: str = "uusd", interval="5m") -> dict:
         """
@@ -164,8 +160,4 @@ class Utils:
         )
         # Temporary (testing)
         s = input("Do you want to proceed with the transaction? (y/n): ")
-        if s.lower() == "y":
-            result = self.client.tx.broadcast(tx)
-            return result
-        else:
-            return None
+        return self.client.tx.broadcast(tx) if s.lower() == "y" else None
